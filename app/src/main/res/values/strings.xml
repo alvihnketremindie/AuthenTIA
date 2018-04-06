@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">SensorCollectorSodifrance2</string>
+
+    <!-- Message de log -->
+    <string name="log_register_SensorEventListener_SensorNull">Impossible d\'enregister un capteur "null"</string>
+    <string name="log_register_SensorEventListener_SensorOK">Enregistrement d\'un listener pour le capteur </string>
+</resources>
