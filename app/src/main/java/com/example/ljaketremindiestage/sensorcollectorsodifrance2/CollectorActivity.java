@@ -2,17 +2,11 @@ package com.example.ljaketremindiestage.sensorcollectorsodifrance2;
 
 import android.content.Context;
 import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.Display;
-import android.view.Surface;
-import android.view.WindowManager;
+import android.os.Environment;
+import android.support.v7.app.AppCompatActivity;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.example.ljaketremindiestage.sensorcollectorsodifrance2.capteurs.CapteurCollector;
 import com.example.ljaketremindiestage.sensorcollectorsodifrance2.logger.DataInternalFileStorage;
@@ -31,7 +25,7 @@ public class CollectorActivity extends AppCompatActivity {
 
     List<Sensor> sensorList;
     DataInternalFileStorage dataInternalFileStorage;
-
+    String pathdir;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +36,12 @@ public class CollectorActivity extends AppCompatActivity {
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         // Faire la liste des capteurs de l'appareil
         dataInternalFileStorage = new DataInternalFileStorage(this);
+        /*String rootPath = Environment.getExternalStorageDirectory().getPath().toString();
+        File rootPathFile = new File(rootPath);
+        rootPathFile.mkdir();
+        pathdir = rootPath + "/Android/data/" + getPackageName() + "/files";
+        */
+        pathdir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath();
         listSensor();
     }
 
@@ -76,8 +76,12 @@ public class CollectorActivity extends AppCompatActivity {
         // pour chaque capteur trouvé, construire sa chaîne descriptive
         for (Sensor sensor : sensorList) {
             capteurCollector = CapteursUtils.getCapeursCollectorBySensor(sensor);
-            capteurCollector.setDataInternalFileStorage(dataInternalFileStorage);
-            capteurCollectorList.add(capteurCollector);
+            //Log.d("debutcoll", sensor.toString());
+            if(capteurCollector != null) {
+                capteurCollector.setDataInternalFileStorage(dataInternalFileStorage);
+                capteurCollector.setPathdir(pathdir);
+                capteurCollectorList.add(capteurCollector);
+            }
         }
         sensorDesc.append("sensor detected's numbers : " + sensorList.size());
         textview.setText(sensorDesc.toString());
