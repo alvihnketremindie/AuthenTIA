@@ -32,7 +32,12 @@ public class CollectorService extends Service {
     public void onCreate() {
         super.onCreate();
         // Lancer la collecte
-        launchSensorCollection();
+        new Thread(new Runnable() {
+            public void run() {
+                launchSensorCollection();
+            }
+        }).start();
+
         Log.i(LOG_TAG, "Service onCreate");
     }
 

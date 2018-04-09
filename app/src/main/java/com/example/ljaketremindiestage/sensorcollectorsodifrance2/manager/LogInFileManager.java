@@ -60,6 +60,13 @@ public class LogInFileManager {
     }
 
     public void writeInFile(File fileName, String content) {
+        /*
+        new Thread(new Runnable() {
+            public void run() {
+                //launchSensorCollection();
+            }
+        }).start();
+        */
         OutputStreamWriter output;
         try {
             // On crée un nouveau fichier. Si le fichier existe déjà, il ne sera pas créé
