@@ -3,6 +3,7 @@ package com.example.ljaketremindiestage.sensorcollectorsodifrance2.capteurs;
 import android.hardware.Sensor;
 
 public class CapteurCollectorMagnetic extends CapteurCollector {
+
     public CapteurCollectorMagnetic(Sensor sensor) {
         super(sensor);
         type = Sensor.TYPE_MAGNETIC_FIELD;

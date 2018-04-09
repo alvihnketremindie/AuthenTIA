@@ -7,6 +7,7 @@ import android.os.Environment;
 
 import com.example.ljaketremindiestage.sensorcollectorsodifrance2.donnees.CapteursData;
 import com.example.ljaketremindiestage.sensorcollectorsodifrance2.logger.DataInternalFileStorage;
+import com.example.ljaketremindiestage.sensorcollectorsodifrance2.manager.LogInFileManager;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -28,16 +29,19 @@ abstract public class CapteurCollector implements SensorEventListener {
     protected File mFile = null;
     protected String pathdir;
 
+    protected LogInFileManager logInFileManager = new LogInFileManager();
+
     public CapteurCollector(Sensor sensor) {
         this.sensor = sensor;
     }
+
     @Override
     public void onSensorChanged(SensorEvent event) {
         float[] values = new float[event.values.length];
         System.arraycopy(event.values, 0, values, 0, event.values.length);
         long time = event.timestamp;
         CapteursData capteursData = new CapteursData(name, values, time);
-        if(!capteursData.equals(previousCapteursData)) {
+        if (!capteursData.equals(previousCapteursData)) {
             previousCapteursData = capteursData;
             variationValeurCapteur(values, time);
         }
@@ -50,6 +54,7 @@ abstract public class CapteurCollector implements SensorEventListener {
 
     /**
      * Cette methode est appele a chaque fois que les valeurs du capteurs change
+     *
      * @param values
      * @param time
      */
@@ -68,39 +73,14 @@ abstract public class CapteurCollector implements SensorEventListener {
         dataInternalFileStorage.ecrire(filename, toEnreg+"\r\n");
         Log.d(filename,toEnreg);
         */
-        saveInFileExternal(toEnreg);
-    }
-
-    public void saveInFileExternal(String toEnreg) {
-        // Si le fichier est lisible et qu'on peut écrire dedans
-        if(Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())
-                && !Environment.MEDIA_MOUNTED_READ_ONLY.equals(Environment.getExternalStorageState())) {
-            //mFile = new File(pathdir + filename);
-            File newFile =  new File(pathdir);
-            mFile = new File(pathdir +"/"+ filename.trim());
-
-            OutputStreamWriter output;
-            try {
-                // On crée un nouveau fichier. Si le fichier existe déjà, il ne sera pas créé
-                newFile.mkdir();
-                //Log.d(filename, pathdir);
-                mFile.createNewFile();
-                output = new OutputStreamWriter(new FileOutputStream(mFile, true));
-                output.append(toEnreg+"\r\n");
-                if(output != null) {
-                    output.close();
-                    //Log.d(filename,toEnreg);
-                }
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
+        logInFileManager.saveInFileExternal(filename.trim(), toEnreg);
     }
 
     public Sensor getSensor() {
         return sensor;
+    }
+
+    public String getName() {
+        return name;
     }
 }

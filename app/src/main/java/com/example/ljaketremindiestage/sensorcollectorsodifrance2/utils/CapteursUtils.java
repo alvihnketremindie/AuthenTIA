@@ -1,10 +1,17 @@
 package com.example.ljaketremindiestage.sensorcollectorsodifrance2.utils;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.hardware.Sensor;
+import android.os.Build;
+import android.os.Environment;
+import android.support.v4.app.ActivityCompat;
+import android.util.Log;
 
 import com.example.ljaketremindiestage.sensorcollectorsodifrance2.capteurs.*;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -12,6 +19,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class CapteursUtils {
+
+    private static final String LOG_TAG = "DirectoryCreation";
+    public static String PACKAGE_NAME = "com.example.ljaketremindiestage.sensorcollectorsodifrance2";
+    public static String STARTFOREGROUND_ACTION = PACKAGE_NAME+".startforeground";
+    public static String STOPFOREGROUND_ACTION = PACKAGE_NAME+".stopforeground";
+    public static String MAIN_ACTION = PACKAGE_NAME+".main";
+    public static String PREV_ACTION =  PACKAGE_NAME+".prev";
+    public static String PLAY_ACTION =  PACKAGE_NAME+".play";
+    public static String NEXT_ACTION =  PACKAGE_NAME+".next";
+    public static int FOREGROUND_SERVICE = 101;
 
     public static String getStrType(int typeInt) {
         return  getCapeursInfosMapByType(typeInt).get("filename");
@@ -39,11 +56,17 @@ public class CapteursUtils {
             case Sensor.TYPE_MAGNETIC_FIELD:
                 capteurCollector = new CapteurCollectorMagnetic(sensor);
                 break;
+            case Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED:;
+                capteurCollector = new CapteurCollectorMagneticUncalibrated(sensor);
+                break;
             case Sensor.TYPE_ORIENTATION:
                 capteurCollector = new CapteurCollectorOrientation(sensor);
                 break;
             case Sensor.TYPE_GYROSCOPE:
                 capteurCollector = new CapteurCollectorGyroscope(sensor);
+                break;
+            case Sensor.TYPE_GYROSCOPE_UNCALIBRATED:
+                capteurCollector = new CapteurCollectorGyroscopeUncalibrated(sensor);
                 break;
             case Sensor.TYPE_PROXIMITY:
                 capteurCollector = new CapteurCollectorProximite(sensor);
@@ -57,6 +80,15 @@ public class CapteursUtils {
             case Sensor.TYPE_ROTATION_VECTOR:
                 capteurCollector = new CapteurCollectorVecteurRotation(sensor);
                 break;
+            case Sensor.TYPE_GAME_ROTATION_VECTOR:
+                capteurCollector = new CapteurCollectorVecteurRotationPourJeu(sensor);
+                break;
+            case Sensor.TYPE_GEOMAGNETIC_ROTATION_VECTOR:
+                capteurCollector = new CapteurCollectorVecteurRotationGeomagnetic(sensor);
+                break;
+            case Sensor.TYPE_TEMPERATURE:
+                capteurCollector = new CapteurCollectorTemperature(sensor);
+                break;
             case Sensor.TYPE_AMBIENT_TEMPERATURE:
                 capteurCollector = new CapteurCollectorTemperatureAmibiante(sensor);
                 break;
@@ -69,85 +101,35 @@ public class CapteursUtils {
             case Sensor.TYPE_RELATIVE_HUMIDITY:
                 capteurCollector = new CapteurCollectorHumiditeRelative(sensor);
                 break;
-            case Sensor.TYPE_TEMPERATURE:
-                capteurCollector = new CapteurCollectorTemperature(sensor);
-                break;
-            case Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED:
-                map.put("type", "Champ magnetique non calibre");
-                map.put("filename", "magnetic_field_uncalibrated.csv");
-                capteurCollector = new CapteurCollectorDefault(sensor);
-                break;
-            case Sensor.TYPE_GAME_ROTATION_VECTOR:
-                map.put("type", "Vecteur de rotation pour jeu");
-                map.put("filename", "game_rotation_vector.csv");
-                capteurCollector = new CapteurCollectorDefault(sensor);
-                break;
-            case Sensor.TYPE_GYROSCOPE_UNCALIBRATED:
-                map.put("type", "Gyroscope non calibre");
-                map.put("filename", "gyroscope_uncalibrated.csv");
-                capteurCollector = new CapteurCollectorDefault(sensor);
-                break;
             case Sensor.TYPE_SIGNIFICANT_MOTION:
-                map.put("type", "Mouvement significatif");
-                map.put("filename", "significant_motion.csv");
-                capteurCollector = new CapteurCollectorDefault(sensor);
-                //capteurCollector = new CapteurCollectorDetecteurMouvementSignificatif(sensor);
+                capteurCollector = new CapteurCollectorDetecteurMouvementSignificatif(sensor);
                 break;
             case Sensor.TYPE_MOTION_DETECT:
-                map.put("type", "Detection de mouvement");
-                map.put("filename", "motion_detect.csv");
-                capteurCollector = new CapteurCollectorDefault(sensor);
-                //capteurCollector = new CapteurCollectorDetectionMouvement(sensor);
-                break;
-            case Sensor.TYPE_STEP_DETECTOR:
-                map.put("type", "Detecteur de pas");
-                map.put("filename", "step_detector.csv");
-                capteurCollector = new CapteurCollectorDefault(sensor);
-                //capteurCollector = new CapteurCollectorDetecteurPas(sensor);
-                break;
-            case Sensor.TYPE_STEP_COUNTER:
-                map.put("type", "Compteur de pas");
-                map.put("filename", "step_counter.csv");
-                capteurCollector = new CapteurCollectorDefault(sensor);
-                //capteurCollector = new CapteurCollectorCompteurPas(sensor);
-                break;
-            case Sensor.TYPE_GEOMAGNETIC_ROTATION_VECTOR:
-                map.put("type", "Vecteur de rotation geomagnetique");
-                map.put("filename", "geomagnetic_rotation_vector.csv");
-                capteurCollector = new CapteurCollectorDefault(sensor);
-                break;
-            case Sensor.TYPE_POSE_6DOF:
-                map.put("type", "POSE_6DOF");
-                map.put("filename", "pose_6dof.csv");
-                capteurCollector = new CapteurCollectorDefault(sensor);
+                capteurCollector = new CapteurCollectorDetecteurMouvement(sensor);
                 break;
             case Sensor.TYPE_STATIONARY_DETECT:
-                map.put("type", "Detection d'arret");
-                map.put("filename", "stationary_detect.csv");
-                capteurCollector = new CapteurCollectorDefault(sensor);
-                //capteurCollector = new CapteurCollectorDetectionArret(sensor);
+                capteurCollector = new CapteurCollectorDetecteurDeStationnement(sensor);
+                break;
+            case Sensor.TYPE_STEP_DETECTOR:
+                capteurCollector = new CapteurCollectorDetecteurPas(sensor);
+                break;
+            case Sensor.TYPE_STEP_COUNTER:
+                capteurCollector = new CapteurCollectorCompteurPas(sensor);
+                break;
+            case Sensor.TYPE_POSE_6DOF:
+                capteurCollector = new CapteurCollectorPose6DOF(sensor);
                 break;
             case Sensor.TYPE_HEART_BEAT:
-                map.put("type", "Battement de coeur");
-                map.put("filename", "heart_beat.csv");
-                capteurCollector = new CapteurCollectorDefault(sensor);
-                //capteurCollector = new CapteurCollectorBattementDeCoeur(sensor);
+                capteurCollector = new CapteurCollectorBattementDeCoeur(sensor);
                 break;
             case Sensor.TYPE_HEART_RATE:
-                map.put("type", "Rythme cardiaque");
-                map.put("filename", "heart_rate.csv");
-                capteurCollector = new CapteurCollectorDefault(sensor);
-                //capteurCollector = new CapteurCollectorRythmeCardiaque(sensor);
+                capteurCollector = new CapteurCollectorRythmeCardiaque(sensor);
                 break;
             case Sensor.TYPE_LOW_LATENCY_OFFBODY_DETECT:
-                map.put("type", "Detection de faible hors du corps");
-                map.put("filename", "low_latency_offbody_detect.csv");
-                capteurCollector = new CapteurCollectorDefault(sensor);
+                capteurCollector = new CapteurCollectorLowLatencyOffBodyDetect(sensor);
                 break;
             case Sensor.TYPE_ACCELEROMETER_UNCALIBRATED:
-                map.put("type", "Inconnu");
-                map.put("filename", "accelerometer_uncalibrated.csv");
-                capteurCollector = new CapteurCollectorDefault(sensor);
+                capteurCollector = new CapteurCollectorAccelerometreUncalibrated(sensor);
                 break;
             case Sensor.TYPE_ALL:
                 capteurCollector = new CapteurCollectorDefault(sensor);
@@ -186,5 +168,56 @@ public class CapteursUtils {
             }
         }
         return bool;
+    }
+
+    public static boolean hasPermissions(Context context, String... permissions) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && context != null && permissions != null) {
+            for (String permission : permissions) {
+                if (ActivityCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    public static void askPermission(Activity activity, String[] permissions, int requestCode) {
+        ActivityCompat.requestPermissions(activity, permissions, requestCode);
+    }
+
+    /* Checks if external storage is available for read and write */
+    public static boolean isExternalStorageWritable() {
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            return true;
+        }
+        return false;
+    }
+
+    /* Checks if external storage is available to at least read */
+    public static boolean isExternalStorageReadable() {
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state) || Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
+            return true;
+        }
+        return false;
+    }
+
+    public static File getPublicFileStorageDir(String fileName) {
+        // Get the directory for the user's public documents directory.
+        File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), fileName);
+        if (!file.mkdirs()) {
+            Log.e(LOG_TAG, "Repertoire non cree");
+        }
+        return file;
+    }
+
+    public static File getPrivateFileStorageDir(Context context, String fileName) {
+        // Get the directory for the app's private documents directory.
+        File file = new File(context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), fileName);
+        if (!file.mkdirs()) {
+            Log.e(LOG_TAG, "Repertoire non cree");
+        }
+        return file;
     }
 }

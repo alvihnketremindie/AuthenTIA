@@ -3,6 +3,7 @@
     package="com.example.ljaketremindiestage.sensorcollectorsodifrance2">
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -24,12 +25,26 @@
             </intent-filter>
         </activity>
         -->
+
+        <!-- Activity -->
         <activity android:name=".CollectorActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Service -->
+        <service android:name=".CollectorService">
+
+        </service>
+
+        <!-- Receiver -->
+        <receiver android:name=".CollectorBroadcastreceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>
