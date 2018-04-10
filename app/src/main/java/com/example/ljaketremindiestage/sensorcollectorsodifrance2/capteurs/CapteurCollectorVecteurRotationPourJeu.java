@@ -2,7 +2,7 @@ package com.example.ljaketremindiestage.sensorcollectorsodifrance2.capteurs;
 
 import android.hardware.Sensor;
 
-public class CapteurCollectorVecteurRotationPourJeu extends CapteurCollectorVecteurRotation {
+public class CapteurCollectorVecteurRotationPourJeu extends CapteurCollectorDefault {
     public CapteurCollectorVecteurRotationPourJeu(Sensor sensor) {
         super(sensor);
         type = Sensor.TYPE_GAME_ROTATION_VECTOR;

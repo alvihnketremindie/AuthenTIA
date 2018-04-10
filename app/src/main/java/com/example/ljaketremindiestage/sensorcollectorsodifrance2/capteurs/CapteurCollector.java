@@ -3,17 +3,12 @@ package com.example.ljaketremindiestage.sensorcollectorsodifrance2.capteurs;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
-import android.os.Environment;
 
 import com.example.ljaketremindiestage.sensorcollectorsodifrance2.donnees.CapteursData;
 import com.example.ljaketremindiestage.sensorcollectorsodifrance2.logger.DataInternalFileStorage;
 import com.example.ljaketremindiestage.sensorcollectorsodifrance2.manager.LogInFileManager;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
 
 abstract public class CapteurCollector implements SensorEventListener {
 
@@ -21,15 +16,14 @@ abstract public class CapteurCollector implements SensorEventListener {
     protected int type;
     protected String name;
     protected String filename;
-
-    protected DataInternalFileStorage dataInternalFileStorage;
-
+    protected String dataToWrite;
     protected CapteursData previousCapteursData = null;
 
+
+    protected DataInternalFileStorage dataInternalFileStorage;
     protected File mFile = null;
     protected String pathdir;
 
-    protected LogInFileManager logInFileManager = new LogInFileManager();
 
     public CapteurCollector(Sensor sensor) {
         this.sensor = sensor;
@@ -39,7 +33,8 @@ abstract public class CapteurCollector implements SensorEventListener {
     public void onSensorChanged(SensorEvent event) {
         float[] values = new float[event.values.length];
         System.arraycopy(event.values, 0, values, 0, event.values.length);
-        long time = event.timestamp;
+        //long time = event.timestamp;
+        long time = System.currentTimeMillis();
         CapteursData capteursData = new CapteursData(name, values, time);
         if (!capteursData.equals(previousCapteursData)) {
             previousCapteursData = capteursData;
@@ -69,11 +64,27 @@ abstract public class CapteurCollector implements SensorEventListener {
     }
 
     public void saveInFile(String toEnreg) {
+        //*
+        dataToWrite = toEnreg;
+        //*/
+        //*
+        //filename = formater.format(new Date())+"_"+filename;
+        //System.out.println(formater.format(aujourdhui));
+        //*/
+        //*
+        new Thread(new Runnable() {
+            public void run() {
+                LogInFileManager logInFileManager = new LogInFileManager();
+                //logInFileManager.saveInFileExternal(CapteursUtils.formater.format(new Date())+"_"+filename.trim(), dataToWrite);
+                logInFileManager.saveInFileExternal(filename.trim(), dataToWrite);
+            }
+        }).start();
+        //*/
         /*
         dataInternalFileStorage.ecrire(filename, toEnreg+"\r\n");
         Log.d(filename,toEnreg);
         */
-        logInFileManager.saveInFileExternal(filename.trim(), toEnreg);
+        //logInFileManager.saveInFileExternal(filename.trim(), dataToWrite);
     }
 
     public Sensor getSensor() {
