@@ -1,12 +1,12 @@
 package com.example.ljaketremindiestage.sensorcollectorsodifrance2.manager;
 
-import android.content.Context;
 import android.os.Environment;
 import android.util.Log;
 
 import com.example.ljaketremindiestage.sensorcollectorsodifrance2.utils.CapteursUtils;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -14,15 +14,19 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.GregorianCalendar;
-import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 public class LogInFileManager {
     public static final String TAG = LogInFileManager.class.getSimpleName();
 
-    /* Checks if external storage is available for read and write */
+    /**
+     * Checks if external storage is available for read and write
+     *
+     * @return TRUE if OK, FALSE otherwise
+     */
     public boolean isExternalStorageWritable() {
         String state = Environment.getExternalStorageState();
         if (Environment.MEDIA_MOUNTED.equals(state)) {
@@ -31,7 +35,12 @@ public class LogInFileManager {
         return false;
     }
 
-    /* Checks if external storage is available to at least read */
+
+    /**
+     * Checks if external storage is available to at least read
+     *
+     * @return TRUE if OK, FALSE otherwise
+     */
     public boolean isExternalStorageReadable() {
         String state = Environment.getExternalStorageState();
         if (Environment.MEDIA_MOUNTED.equals(state) || Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
@@ -39,6 +48,28 @@ public class LogInFileManager {
         }
         return false;
     }
+    /*
+    public File getFichiersCapteurs(String dirName, String fileName)  {
+        File fichier;
+        File dossier_parent = new File(dirName);
+        if(!(dossier_parent.exists() && dossier_parent.isDirectory())) {
+            dossier_parent.mkdirs();
+            Log.d(CapteursUtils.APP_NAME, "Création du dossier " + dossier_parent.getAbsolutePath());
+        }
+        fichier = new File(dossier_parent, fileName);
+        if(!fichier.exists()) {
+            try {
+                fichier.createNewFile();
+                Log.d(CapteursUtils.APP_NAME, "Création du fichier " + fichier.getAbsolutePath());
+            } catch (IOException e) {
+                Log.e(TAG, "Erreur lors de la création du fichier " + fileName);
+                fichier = null;
+                e.printStackTrace();
+            }
+        }
+        return fichier;
+    }
+
 
     public File getPublicFileStorageDir(String dirName) {
         // Get the directory for the user's public documents directory.
@@ -49,34 +80,42 @@ public class LogInFileManager {
         // Get the directory for the app's private documents directory.
         return createNewDirectory(context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), dirName);
     }
+    //*/
 
-    public File createNewDirectory(File dirFile, String dirName) {
-        File file = new File(dirFile, dirName);
-        file.mkdirs();
-        return file;
+    public File retourneDossier(String dirName) {
+        File dirFile = new File(dirName);
+        if (!dirFile.exists()) {
+            dirFile.mkdirs();
+            Log.d(CapteursUtils.APP_NAME, "Création du dossier " + dirFile.getAbsolutePath());
+        }
+        if (!dirFile.isDirectory()) {
+            Log.e(CapteursUtils.APP_NAME, "Erreur " + dirName + " existe mais n'est pas un dossier");
+            dirFile = null;
+        }
+        return dirFile;
     }
 
-    public File createNewFile(File dirFile, String fileName) {
-        File file = new File(dirFile, fileName);
-        try {
-            file.createNewFile();
-            //saveInZIPFile(file);
-        } catch (IOException e) {
-            Log.e(TAG, "Erreur lors de la création du fichier " + fileName);
-            file = null;
-            //e.printStackTrace();
+    public File retourneFicher(File dirFile, String fileName) {
+        if (dirFile == null) return null;
+        File fichier = new File(dirFile, fileName);
+        if (!fichier.exists()) {
+            try {
+                fichier.createNewFile();
+                Log.d(CapteursUtils.APP_NAME, "Création du fichier " + fichier.getAbsolutePath());
+            } catch (IOException e) {
+                Log.e(TAG, "Erreur lors de la création du fichier " + fileName);
+                fichier = null;
+                e.printStackTrace();
+            }
         }
-        return file;
+        return fichier;
+    }
+
+    public File retourneFichier(String dirName, String fileName) {
+        return retourneFicher(retourneDossier(dirName), fileName);
     }
 
     public void writeInFile(File fileName, String content) {
-        /*
-        new Thread(new Runnable() {
-            public void run() {
-                //launchSensorCollection();
-            }
-        }).start();
-        */
         OutputStreamWriter output;
         try {
             // On crée un nouveau fichier. Si le fichier existe déjà, il ne sera pas créé
@@ -84,11 +123,13 @@ public class LogInFileManager {
             output.append(content + "\r\n");
             if (output != null) {
                 output.close();
-                //Log.d(TAG, content);
+                //Log.d(fileName.getName(), content);
             }
         } catch (FileNotFoundException e) {
+            Log.e(CapteursUtils.APP_NAME, "Le fichier " + fileName.getAbsolutePath() + " n'a pu être trouvé");
             e.printStackTrace();
         } catch (IOException e) {
+            Log.e(CapteursUtils.APP_NAME, "Erreur sur les entrées sorties. ==> Problèmes d'écriture");
             e.printStackTrace();
         }
     }
@@ -97,52 +138,65 @@ public class LogInFileManager {
         // Si le fichier est lisible et qu'on peut écrire dedans
         if (isExternalStorageReadable() && isExternalStorageWritable()) {
             //File repertoireCateur = getPublicFileStorageDir("capteurs");
-            File fichierCapteurs = createNewFile(getPublicFileStorageDir("capteurs"), fileName);
+            //File fichierCapteurs = createNewFile(getPublicFileStorageDir("capteurs"), fileName);
+            File fichierCapteurs = retourneFichier(CapteursUtils.APP_PATH_SENSOR, fileName);
             if (fichierCapteurs != null) {
+                if (mustArchiveFile(fichierCapteurs)) {
+                    zip(CapteursUtils.formater.format(new Date()));
+                }
                 writeInFile(fichierCapteurs, toEnreg);
             }
+        } else {
+            Log.e(CapteursUtils.APP_NAME, "L'autorisation d'écriture n'a pas été accordée");
         }
     }
 
-    private void saveInZIPFile(File fichier) {
-        String zipName = fichier.getAbsoluteFile().getParent() + File.separator + "20180410" + ".zip";
-        Log.d(TAG, "zipName = " + zipName);
-        Log.d(TAG, "absolutePath = " + fichier.getAbsolutePath());
-        int BUFFER = 1024;
-        try {
-            //String name = CapteursUtils.formater.format(new Date());
-            FileOutputStream fos = new FileOutputStream(zipName);
-            ZipOutputStream zos = new ZipOutputStream(fos);
-            byte data[] = new byte[BUFFER];
-            //*
-            zos.setMethod(ZipOutputStream.DEFLATED);
-            zos.setLevel(Deflater.BEST_COMPRESSION);
-            //*/
+    public void zip(String zipDate) {
+        File zipDir = retourneDossier(CapteursUtils.APP_PATH_SENSOR_ARCHIVE);
+        File zipFile = new File(zipDir, "data_" + zipDate + ".zip");
+        if (zipFile != null && !zipFile.exists()) {
 
-            FileInputStream fis = new FileInputStream(fichier.getAbsolutePath());
-            BufferedInputStream origin = new BufferedInputStream(fis, BUFFER);
-            /*
-            byte[] bytes = new byte[fis.available()];
-            fis.read(bytes);
-            //*/
-            ZipEntry entry = new ZipEntry(fichier.getName());
-            //entry.setTime(fichier.lastModified());
-            zos.putNextEntry(entry);
-
-            int count;
-            while ((count = origin.read(data, 0, BUFFER)) > 0) {
-                zos.write(data, 0, count);
+            BufferedInputStream bufferedInputStream = null;
+            FileOutputStream fileOutputStream = null;
+            try {
+                zipFile.createNewFile();
+                Log.d(CapteursUtils.APP_NAME, "Création du fichier ZIP : " + zipFile.getAbsolutePath());
+                fileOutputStream = new FileOutputStream(zipFile.getAbsolutePath());
+                ZipOutputStream zipOutputStream = new ZipOutputStream(new BufferedOutputStream(fileOutputStream));
+                byte data[] = new byte[CapteursUtils.BUFFER];
+                File f = new File(CapteursUtils.APP_PATH_SENSOR);
+                File files[] = f.listFiles();
+                for (File file : files) {
+                    if (!file.isDirectory()) {
+                        FileInputStream fileInputStream = new FileInputStream(file);
+                        bufferedInputStream = new BufferedInputStream(fileInputStream, CapteursUtils.BUFFER);
+                        ZipEntry zipEntry = new ZipEntry(file.getName());
+                        zipOutputStream.putNextEntry(zipEntry);
+                        int count;
+                        while ((count = bufferedInputStream.read(data, 0, CapteursUtils.BUFFER)) != -1) {
+                            zipOutputStream.write(data, 0, count);
+                        }
+                        bufferedInputStream.close();
+                        Log.d(CapteursUtils.APP_NAME, "Compression du fichier : " + file.getAbsolutePath());
+                        //Vidage du fichier sauvegarder
+                        FileOutputStream fileToEmpty = new FileOutputStream(file.getAbsolutePath());
+                        fileToEmpty.close();
+                        Log.d(CapteursUtils.APP_NAME, "Vidage du fichier : " + file.getAbsolutePath());
+                    }
+                }
+                zipOutputStream.close();
+            } catch (FileNotFoundException e) {
+                Log.e(CapteursUtils.APP_NAME, "Un des fichiers n'a pu être retrouvé");
+                e.printStackTrace();
+            } catch (IOException e) {
+                Log.e(CapteursUtils.APP_NAME, "Une erreur s'est produite lors de la lecture / ecriture dans les fichiers");
+                e.printStackTrace();
+            } catch (Exception e) {
+                Log.e(CapteursUtils.APP_NAME, "Une erreur innatendu s'est produite lors du zip");
+                e.printStackTrace();
             }
-            origin.close();
-
-            //Close the input stream
-            zos.closeEntry();
-            fis.close();
-            zos.close();
-        } catch (FileNotFoundException fileNotFound) {
-
-        } catch (IOException io) {
-
+        } else if (zipFile == null) {
+            Log.e(CapteursUtils.APP_NAME, "Le fichier zip instancier est null");
         }
     }
 
@@ -162,8 +216,9 @@ public class LogInFileManager {
         int nDays = CapteursUtils.daysBetween(cal1, cal2);
         if (nDays > 0) {
             toReturn = true;
+            Log.d(TAG, "Fichier à archiver :  vieux de  " + nDays + " jours");
         }
-        Log.d(TAG, "Fichier à archiver :  vieux de  " + nDays + " jours");
         return toReturn;
+        //return true;
     }
 }

@@ -51,25 +51,33 @@ import java.util.Map;
 public class CapteursUtils {
 
     private static final String LOG_TAG = "DirectoryCreation";
+    public static String APP_NAME = "sensorcollectorsodifrance";
     public static String PACKAGE_NAME = "com.example.ljaketremindiestage.sensorcollectorsodifrance2";
-    public static String STARTFOREGROUND_ACTION = PACKAGE_NAME+".startforeground";
-    public static String STOPFOREGROUND_ACTION = PACKAGE_NAME+".stopforeground";
-    public static String MAIN_ACTION = PACKAGE_NAME+".main";
-    public static String PREV_ACTION =  PACKAGE_NAME+".prev";
-    public static String PLAY_ACTION =  PACKAGE_NAME+".play";
-    public static String NEXT_ACTION =  PACKAGE_NAME+".next";
+    public static String STARTFOREGROUND_ACTION = PACKAGE_NAME + ".startforeground";
+    public static String STOPFOREGROUND_ACTION = PACKAGE_NAME + ".stopforeground";
+    public static String MAIN_ACTION = PACKAGE_NAME + ".main";
+    public static String PREV_ACTION = PACKAGE_NAME + ".prev";
+    public static String PLAY_ACTION = PACKAGE_NAME + ".play";
+    public static String NEXT_ACTION = PACKAGE_NAME + ".next";
     public static int FOREGROUND_SERVICE = 101;
+
+    public static int BUFFER = 1024;
+
+    public static String APP_PATH = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + APP_NAME;
+    public static String APP_PATH_SENSOR = APP_PATH + File.separator + "capteurs";
+    public static String APP_PATH_SENSOR_ARCHIVE = APP_PATH + File.separator + "archive_capteurs";
+
+    public static String SEPARATEUR_CSV = ";";
 
     //public static SimpleDateFormat formater = new SimpleDateFormat("yyyyMMddHHmmss");
     public static SimpleDateFormat formater = new SimpleDateFormat("yyyyMMdd");
 
     public static String getStrType(int typeInt) {
-        return  getCapeursInfosMapByType(typeInt).get("filename");
+        return getCapeursInfosMapByType(typeInt).get("filename");
     }
 
     public static Map<String, String> getCapeursInfosMapByType(int typeInt) {
         Map<String, String> map = new HashMap<String, String>();
-
 
 
         return map;
@@ -230,6 +238,7 @@ public class CapteursUtils {
     /**
      * Méthode pour ecrire du texte (donnees) au sein d'un fichier (filename)
      * Le retour est un booleen qui indique si l'écriture s'est bien passée
+     *
      * @param filename
      * @param donnees
      * @return
@@ -238,16 +247,14 @@ public class CapteursUtils {
         boolean bool = true;
         FileOutputStream fOut = null;
         OutputStreamWriter osw = null;
-        try{
+        try {
             fOut = context.openFileOutput(filename, Context.MODE_APPEND);
             osw = new OutputStreamWriter(fOut);
             osw.write(donnees);
             osw.flush();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             bool = false;
-        }
-        finally {
+        } finally {
             try {
                 osw.close();
                 fOut.close();
