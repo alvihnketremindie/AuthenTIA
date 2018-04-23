@@ -93,7 +93,8 @@ public class CollectorActivity extends AppCompatActivity {
      * Trouve la liste de tous les capteurs existants, trouve un capteur spécifique ou l'ensemble des capteurs d'un type fixé.
      */
 
-    private void listSensor() {// Instanicer le SensorManager
+    private void listSensor() {
+        // Instanicer le SensorManager
         /*
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         // Faire la liste des capteurs de l'appareil
